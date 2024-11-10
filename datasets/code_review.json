@@ -1,0 +1,34 @@
+{
+    "name": "CodeReview",
+    "schema": [
+      {"idx": 0, "colName": "Reviewer", "dataType": "string"},
+      {"idx": 1, "colName": "Reviewee", "dataType": "string"},
+      {"idx": 2, "colName": "ReviewDate", "dataType": "string"},
+      {"idx": 3, "colName": "Comments", "dataType": "string"},
+      {"idx": 4, "colName": "LinesChanged", "dataType": "int"},
+      {"idx": 5, "colName": "Approved", "dataType": "string"}
+    ],
+    "data": [
+      ["Alice", "Bob", "2023-10-01", "Good code quality, minor improvements needed.", 120, "Yes"],
+      ["Charlie", "Alice", "2023-10-02", "Code could be more modular.", 150, "No"],
+      ["Eve", "Dave", "2023-10-03", "Clear code, well-documented.", 80, "Yes"],
+      ["Bob", "Charlie", "2023-10-04", "Optimize the loops for better performance.", 200, "No"],
+      ["Alice", "Eve", "2023-10-05", "Well-structured, but needs additional comments.", 90, "Yes"],
+      ["Charlie", "Bob", "2023-10-06", "Consider reusing existing functions.", 180, "No"],
+      ["Eve", "Alice", "2023-10-07", "Excellent job, very clean.", 110, "Yes"],
+      ["Dave", "Charlie", "2023-10-08", "Add error handling for edge cases.", 130, "No"],
+      ["Alice", "Dave", "2023-10-09", "Very efficient, but missing tests.", 95, "No"],
+      ["Charlie", "Eve", "2023-10-10", "Good use of libraries, well done.", 140, "Yes"],
+      ["Bob", "Alice", "2023-10-11", "Could improve variable naming.", 170, "No"],
+      ["Eve", "Charlie", "2023-10-12", "Solid implementation, minor style tweaks.", 75, "Yes"],
+      ["Dave", "Bob", "2023-10-13", "Refactor the nested conditionals.", 125, "No"],
+      ["Alice", "Charlie", "2023-10-14", "Good modular approach.", 100, "Yes"],
+      ["Charlie", "Dave", "2023-10-15", "Needs to handle null values.", 160, "No"],
+      ["Eve", "Bob", "2023-10-16", "Consider simplifying complex logic.", 105, "Yes"],
+      ["Bob", "Alice", "2023-10-17", "Add more inline comments.", 185, "No"],
+      ["Dave", "Eve", "2023-10-18", "Well-organized and easy to follow.", 130, "Yes"],
+      ["Charlie", "Alice", "2023-10-19", "Could improve error messages.", 145, "No"],
+      ["Eve", "Dave", "2023-10-20", "Efficient, no further comments.", 90, "Yes"]
+    ]
+  }
+  

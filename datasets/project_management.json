@@ -1,0 +1,35 @@
+{
+    "name": "ProjectManagement",
+    "schema": [
+      {"idx": 0, "colName": "ProjectName", "dataType": "string"},
+      {"idx": 1, "colName": "Task", "dataType": "string"},
+      {"idx": 2, "colName": "AssignedTo", "dataType": "string"},
+      {"idx": 3, "colName": "DueDate", "dataType": "date"},
+      {"idx": 4, "colName": "Status", "dataType": "string"},
+      {"idx": 5, "colName": "Priority", "dataType": "string"},
+      {"idx": 6, "colName": "HoursSpent", "dataType": "double"}
+    ],
+    "data": [
+      ["Website Redesign", "Design homepage", "Alice", "2023-10-15", "In Progress", "High", 10.5],
+      ["Website Redesign", "Develop homepage", "Bob", "2023-10-20", "Not Started", "High", 0.0],
+      ["App Development", "Build login page", "Charlie", "2023-10-12", "Completed", "Medium", 8.0],
+      ["App Development", "Set up database", "Dave", "2023-10-18", "In Progress", "High", 5.5],
+      ["Marketing Campaign", "Create email templates", "Eve", "2023-10-10", "Completed", "Medium", 7.0],
+      ["Marketing Campaign", "Launch social media ads", "Frank", "2023-10-25", "Not Started", "High", 0.0],
+      ["Website Redesign", "Test homepage", "Alice", "2023-10-25", "Not Started", "Medium", 0.0],
+      ["App Development", "User authentication", "Charlie", "2023-10-20", "In Progress", "High", 6.0],
+      ["Website Redesign", "Finalize design", "Eve", "2023-10-22", "Not Started", "Low", 0.0],
+      ["Marketing Campaign", "Analyze campaign data", "Bob", "2023-10-30", "Not Started", "Medium", 0.0],
+      ["App Development", "Integrate payment gateway", "Alice", "2023-10-28", "Not Started", "High", 0.0],
+      ["Marketing Campaign", "Design ad creatives", "Charlie", "2023-10-20", "In Progress", "High", 3.0],
+      ["Website Redesign", "Mobile responsiveness", "Dave", "2023-10-30", "Not Started", "Medium", 0.0],
+      ["App Development", "Optimize database", "Frank", "2023-10-24", "In Progress", "Medium", 4.5],
+      ["Marketing Campaign", "Create landing page", "Alice", "2023-10-27", "Not Started", "High", 0.0],
+      ["Website Redesign", "SEO optimization", "Eve", "2023-10-28", "Not Started", "Low", 0.0],
+      ["App Development", "Deploy app", "Bob", "2023-10-29", "Not Started", "High", 0.0],
+      ["Marketing Campaign", "Set up analytics", "Charlie", "2023-10-26", "Not Started", "Medium", 0.0],
+      ["Website Redesign", "Cross-browser testing", "Dave", "2023-10-27", "Not Started", "Medium", 0.0],
+      ["App Development", "Debug issues", "Eve", "2023-10-31", "Not Started", "High", 0.0]
+    ]
+  }
+  
