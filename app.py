@@ -17,6 +17,7 @@ data_files = {
 
 # Database and Superset settings
 DB_CONNECTION_STRING = 'mysql+pymysql://superset_user3:dhatchan@localhost/superset_dbb'
+# DB_CONNECTION_STRING = 'oracle+cx_oracle://C##superset_user:dhatchan@localhost:1521/?service_name=FREE'
 TABLE_NAME = 'rester_sample'
 DATASET_NAME = 'rester_sample'
 DASHBOARD_TITLE = 'Auto-generated Dashboard'
@@ -68,6 +69,18 @@ def generate_guest_token(dashboard_id):
     else:
         raise Exception(f"Failed to generate guest token {response.json()}")
 
+progress = {"value": 0}
+
+@app.route('/progress', methods=['GET'])
+def get_progress():
+    global progress
+    return progress, 200
+
+def update_progress(value):
+    """Update the global progress."""
+    global progress
+    progress["value"] = value
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     response_message = ""
@@ -93,7 +106,7 @@ def index():
                     schema=SCHEMA
                 )
                 
-                response_message = f"Dashboard created and embedded successfully for '{query}'."
+                response_message = f"Dashboard created successfully for '{query}'."
             except Exception as e:
                 response_message = f"Error creating dashboard: {str(e)}"
         else:
@@ -108,13 +121,16 @@ def index():
             <style>
                 body {
                     font-family: Arial, sans-serif;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
                     background-color: #f4f4f4;
+                    margin: 0;
+                    padding: 0;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: flex-start;
+                    min-height: 100vh;
                 }
+
                 .container {
                     text-align: center;
                     background: #ffffff;
@@ -122,6 +138,8 @@ def index():
                     border-radius: 8px;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                     width: 90%;
+                    max-width: 1600px;
+                    margin-top: 20px;
                 }
                 h1 {
                     font-size: 1.8em;
@@ -160,6 +178,14 @@ def index():
                 }
                 .embed-container {
                     margin-top: 20px;
+                    width: 100%;
+                    max-width: 1400px;
+                    height: calc(100vh - 100px);
+                }
+                .embed-container iframe {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
                 }
                 #loading-overlay {
                     display: none;
@@ -172,57 +198,165 @@ def index():
                     color: #fff;
                     font-size: 1.5em;
                     font-weight: bold;
-                    text-align: center;
-                    padding-top: 30%;
                     z-index: 1000;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    text-align: center;
                 }
+                .loading-bar-container {
+                    width: 50%;
+                    height: 10px;
+                    background: #ccc;
+                    border-radius: 5px;
+                    overflow: hidden;
+                    margin-top: 20px;
+                    position: relative;
+                }
+                .loading-bar {
+                    width: 0;
+                    height: 100%;
+                    background: #007BFF;
+                    transition: width 0.2s ease;
+                }
+                button.fullscreen-btn {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background-color: #007BFF;
+                    color: #ffffff;
+                    padding: 10px;
+                    border: none;
+                    border-radius: 5px;
+                    font-size: 1em;
+                    cursor: pointer;
+                    z-index: 1000;
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                }
+                button.fullscreen-btn:hover {
+                    background-color: #0056b3;
+                }
+            input[type="text"] {
+                width: calc(100% - 50px); /* Adjust width to account for mic icon */
+                padding: 8px;
+                margin: 8px 0;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-sizing: border-box;
+                padding-right: 40px; /* Space for mic icon */
+            }
+
+            span {
+                font-size: 1.5em; /* Adjust mic icon size */
+                color: #555;
+            }
             </style>
             <script>
-                function startDictation() {
-                    if (window.hasOwnProperty('webkitSpeechRecognition')) {
-                        var recognition = new webkitSpeechRecognition();
-                        recognition.continuous = false;
-                        recognition.interimResults = false;
-                        recognition.lang = "en-US";
-                        recognition.start();
+                document.addEventListener("DOMContentLoaded", function() {
+                    const overlay = document.getElementById('loading-overlay');
+                    overlay.style.display = 'none';
+                });
 
-                        recognition.onresult = function(event) {
-                            document.getElementById('query').value = event.results[0][0].transcript;
-                            recognition.stop();
-                        };
+                let progress = 0;
+                let loadingInterval;
 
-                        recognition.onerror = function() {
-                            recognition.stop();
+                function startLoading() {
+                    const bar = document.querySelector('.loading-bar');
+                    loadingInterval = setInterval(() => {
+                        progress += Math.random() * 10; // Simulate random progress
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(loadingInterval);
                         }
+                        bar.style.width = progress + '%';
+                    }, 1500); // Update every 200ms
+                }
+
+                function showLoading() {
+                    const overlay = document.getElementById('loading-overlay');
+                    overlay.style.display = 'flex';
+                    progress = 0; // Reset progress
+                    startLoading();
+                }
+
+                function goFullScreen() {
+                    var iframe = document.getElementById('dashboard-iframe');
+                    if (iframe.requestFullscreen) {
+                        iframe.requestFullscreen();
+                    } else if (iframe.mozRequestFullScreen) {
+                        iframe.mozRequestFullScreen();
+                    } else if (iframe.webkitRequestFullscreen) {
+                        iframe.webkitRequestFullscreen();
+                    } else if (iframe.msRequestFullscreen) {
+                        iframe.msRequestFullscreen();
                     }
                 }
-                
-                function showLoading() {
-                    document.getElementById('loading-overlay').style.display = 'block';
-                }
+                function startDictation() {
+    if (window.hasOwnProperty('webkitSpeechRecognition')) {
+        var recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+        recognition.start();
+
+        recognition.onresult = function(event) {
+            document.getElementById('query').value = event.results[0][0].transcript;
+            recognition.stop();
+            
+            // Show the loading overlay before form submission
+            showLoading();
+            
+            // Automatically submit the form after speech recognition
+            document.querySelector('form').submit();
+        };
+
+        recognition.onerror = function() {
+            recognition.stop();
+        }
+    }
+}
+
             </script>
         </head>
         <body>
-            <div id="loading-overlay">Creating dashboard and charts. Please wait...</div>
+            <div id="loading-overlay">
+                <div>Creating dashboard and charts. Please wait...</div>
+                <div class="loading-bar-container">
+                    <div class="loading-bar"></div>
+                </div>
+            </div>
             <div class="container">
-                <h1>Data Loader</h1>
-                <form method="post" onsubmit="showLoading()">
-                    <input type="text" id="query" name="query" placeholder="Enter data type..." required>
-                    <button type="submit">Load Data</button>
-                    <button type="button" onclick="startDictation()">🎙️ Speak</button>
-                </form>
+                <h1 style="display: flex; align-items: center; justify-content: center;">
+                <img src="static\logo.png" alt="Logo" style="height: 40px; margin-right: 10px;">
+                <span>QzInsights</span>
+                </h1>
+                <form method="post" onsubmit="showLoading()" style="position: relative;">
+    <input type="text" id="query" name="query" placeholder="Enter data type..." required>
+    <button type="submit">Load Data</button>
+    <span style="position: absolute; right: 30px; top: 27%; transform: translateY(-50%); cursor: pointer;" onclick="startDictation()">
+        🎤
+    </span>
+</form>
                 <p class="response-message">{{ response_message }}</p>
                 
                 {% if embed_url %}
-                <div class="embed-container">
-                    <h2>Embedded Dashboard</h2>
-                    <iframe src="{{ embed_url }}&standalone=1" width="100%" height="800px" frameborder="0" style="border:0;"></iframe>
-                </div>
+                    <div class="embed-container">
+                        <iframe 
+                            id="dashboard-iframe" 
+                            src="{{ embed_url }}&standalone=1" 
+                            width="100%" 
+                            height="100%" 
+                            frameborder="0" 
+                            style="border:0;"></iframe>
+                    </div>
+                    <button class="fullscreen-btn" onclick="goFullScreen()">Full Screen</button>
                 {% endif %}
             </div>
         </body>
         </html>
     ''', response_message=response_message, embed_url=embed_url)
 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5050)

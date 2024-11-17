@@ -7,8 +7,7 @@ import oracledb
 import sys
 oracledb.version = "8.3.0"
 sys.modules["cx_Oracle"] = oracledb
-import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
+import cx_Oracle
 
 # Superset connection details
 SUPERSET_BASE_URL = "http://localhost:8088"
@@ -61,60 +60,37 @@ def create_table_if_not_exists(df, engine, table_name):
     df.head(0).to_sql(table_name, con=engine, if_exists='replace', index=False)
     print(f"Table '{table_name}' created.")
 
-# def load_json_to_db(json_data, db_connection_string, table_name):
-#     """
-#     Load JSON data from file into the specified database table based on the new JSON format.
-#     """
-#     # with open(file_path, 'r') as file:
-#     #     json_data = json.load(file)
-
-#     # Extract column names and data types from the schema
-#     columns = [col['colName'] for col in json_data['schema']]
-#     data_types = {col['colName']: col['dataType'] for col in json_data['schema']}
-    
-#     # Convert data to DataFrame using the extracted schema
-#     df = pd.DataFrame(json_data['data'], columns=columns)
-
-#     # Ensure data types match the schema definition
-#     for column, dtype in data_types.items():
-#         if dtype == "string":
-#             df[column] = df[column].astype(str)
-#         elif dtype == "double":
-#             df[column] = df[column].astype(float)
-#         elif dtype == "int":
-#             df[column] = df[column].astype(int)
-
-#     # Create a SQLAlchemy engine
-#     engine = sqlalchemy.create_engine(db_connection_string)
-
-#     # Create table if not exists
-#     create_table_if_not_exists(df, engine, table_name)
-
-#     # Insert data into the table
-#     df.to_sql(table_name, con=engine, if_exists='append', index=False)
-#     print(f"Data inserted into '{table_name}' successfully.")
-#     return df
-
 def load_json_to_db(json_data, db_connection_string, table_name):
+    """
+    Load JSON data from file into the specified database table based on the new JSON format.
+    """
+    # with open(file_path, 'r') as file:
+    #     json_data = json.load(file)
+
+    # Extract column names and data types from the schema
     columns = [col['colName'] for col in json_data['schema']]
     data_types = {col['colName']: col['dataType'] for col in json_data['schema']}
-    dtype_mapping = {"string": str, "double": float, "int": int, "date": "datetime64[ns]"}
-
+    
     # Convert data to DataFrame using the extracted schema
     df = pd.DataFrame(json_data['data'], columns=columns)
 
     # Ensure data types match the schema definition
     for column, dtype in data_types.items():
-        if dtype == "date":
-            df[column] = pd.to_datetime(df[column], errors='coerce')
-        else:
-            df[column] = df[column].astype(dtype_mapping[dtype])
+        if dtype == "string":
+            df[column] = df[column].astype(str)
+        elif dtype == "double":
+            df[column] = df[column].astype(float)
+        elif dtype == "int":
+            df[column] = df[column].astype(int)
 
+    # Create a SQLAlchemy engine
     engine = sqlalchemy.create_engine(db_connection_string)
+
+    # Create table if not exists
     create_table_if_not_exists(df, engine, table_name)
 
-    chunk_size = 1000
-    df.to_sql(table_name, con=engine, if_exists='append', index=False, chunksize=chunk_size)
+    # Insert data into the table
+    df.to_sql(table_name, con=engine, if_exists='append', index=False)
     print(f"Data inserted into '{table_name}' successfully.")
     return df
 
@@ -133,86 +109,34 @@ def get_dataset_id(headers, dataset_name):
         print(f"Failed to fetch datasets: {response.text}")
         return None
 
-# def get_or_create_dataset(headers, dataset_name, database_id, schema):
-#     """
-#     Check if a dataset exists; if it does, delete it. Then create a new dataset.
-#     """
-#     response = requests.get(DATASET_ENDPOINT, headers=headers)
-#     if response.status_code == 200:
-#         datasets = response.json().get("result", [])
-#         for dataset in datasets:
-#             if dataset.get("table_name") == dataset_name:
-#                 dataset_id = dataset.get("id")
-#                 print(f"Dataset '{dataset_name}' found with ID: {dataset_id}, deleting it.")
-#                 delete_dataset(headers, dataset_id)
-#                 break  # Stop after finding and deleting the dataset
-
-#     # Create a new dataset
-#     payload = {
-#         "database": database_id,
-#         "table_name": dataset_name,
-#         "schema": schema
-#     }
-#     response = requests.post(DATASET_ENDPOINT, headers=headers, json=payload)
-#     if response.status_code == 201:
-#         dataset_id = response.json().get("id")
-#         print(f"Dataset '{dataset_name}' created with ID: {dataset_id}")
-#         return dataset_id
-#     else:
-#         print(f"Failed to create dataset: {response.text}")
-#         return None
-import requests
-
 def get_or_create_dataset(headers, dataset_name, database_id, schema):
     """
     Check if a dataset exists; if it does, delete it. Then create a new dataset.
-    Optimized for speed with minimal API calls and asynchronous handling.
     """
-    try:
-        # Use query parameters to filter datasets by name if API supports it
-        response = requests.get(
-            DATASET_ENDPOINT,
-            headers=headers,
-            params={"q": json.dumps({"table_name": dataset_name})}  # Filter datasets by name
-        )
-        response.raise_for_status()  # Raise an error for HTTP issues
-        
+    response = requests.get(DATASET_ENDPOINT, headers=headers)
+    if response.status_code == 200:
         datasets = response.json().get("result", [])
-        if datasets:
-            # Dataset exists, get its ID
-            existing_dataset_id = datasets[0].get("id")
-            print(f"Dataset '{dataset_name}' found with ID: {existing_dataset_id}, deleting it.")
-            
-            # Delete the dataset
-            delete_response = requests.delete(
-                f"{DATASET_ENDPOINT}{existing_dataset_id}",
-                headers=headers
-            )
-            delete_response.raise_for_status()
-            print(f"Dataset '{dataset_name}' deleted successfully.")
-        
-        # Create a new dataset
-        payload = {
-            "database": database_id,
-            "table_name": dataset_name,
-            "schema": schema
-        }
-        print(payload)
-        create_response = requests.post(
-            DATASET_ENDPOINT,
-            headers=headers,
-            json=payload
-        )
-        create_response.raise_for_status()
+        for dataset in datasets:
+            if dataset.get("table_name") == dataset_name:
+                dataset_id = dataset.get("id")
+                print(f"Dataset '{dataset_name}' found with ID: {dataset_id}, deleting it.")
+                delete_dataset(headers, dataset_id)
+                break  # Stop after finding and deleting the dataset
 
-        dataset_id = create_response.json().get("id")
+    # Create a new dataset
+    payload = {
+        "database": database_id,
+        "table_name": dataset_name,
+        "schema": schema
+    }
+    response = requests.post(DATASET_ENDPOINT, headers=headers, json=payload)
+    if response.status_code == 201:
+        dataset_id = response.json().get("id")
         print(f"Dataset '{dataset_name}' created with ID: {dataset_id}")
         return dataset_id
-    
-    except requests.RequestException as e:
-        print(f"Error while processing dataset '{dataset_name}': {e}")
+    else:
+        print(f"Failed to create dataset: {response.text}")
         return None
-
 
 def delete_dataset(headers, dataset_id):
     """
@@ -348,14 +272,14 @@ def analyze_dataset_and_generate_visualizations(df):
         elif pd.api.types.is_datetime64_any_dtype(df[column]):
             visualizations.append({
                 "type": "line",
-                "metrics": ["count"],
+                "metric": column,
                 "time_column": column,
                 "description": f"Time-series Line Chart of {column}"
             })
 
             visualizations.append({
                 "type": "area",
-                "metrics": ["count"],
+                "metric": column,
                 "time_column": column,
                 "description": f"Time-series Area Chart of {column}"
             })
@@ -457,7 +381,6 @@ def create_chart(headers, dataset_id, visualization, dashboard_id=None):
     elif visualization.get("type") in ["line", "area"]:
         params["granularity_sqla"] = visualization.get("time_column")
         params["time_range"] = "No Filter"
-        params["metrics"] = visualization.get("metrics")
 
     elif visualization.get("type") == "big_number":
         params["metric"] = visualization.get("metric")
@@ -534,27 +457,9 @@ def run_xray_with_json(file_path, db_connection_string, table_name, dataset_name
         visualizations = analyze_dataset_and_generate_visualizations(df)
         dashboard_id = create_dashboard(headers, dashboard_title)
 
-        # if dashboard_id:
-        #     for viz in visualizations:
-        #         create_chart(headers, dataset_id, viz, dashboard_id)
-
         if dashboard_id:
-            with ThreadPoolExecutor(max_workers=20) as executor:  # Adjust the number of workers as needed
-                future_to_viz = {
-                    executor.submit(create_chart, headers, dataset_id, viz, dashboard_id): viz
-                    for viz in visualizations
-                }
-
-            for future in concurrent.futures.as_completed(future_to_viz):
-                viz = future_to_viz[future]
-                try:
-                    chart_id = future.result()
-                    if chart_id:
-                        print(f"Chart created successfully for: {viz['description']}")
-                    else:
-                        print(f"Failed to create chart for: {viz['description']}")
-                except Exception as e:
-                    print(f"Exception while creating chart for {viz['description']}: {e}")
+            for viz in visualizations:
+                create_chart(headers, dataset_id, viz, dashboard_id)
     
         embed_uuid = generate_embed_url(dashboard_id, headers)
         embed_url = f"{SUPERSET_BASE_URL}/superset/dashboard/{dashboard_id}/?guest_token={embed_uuid}"

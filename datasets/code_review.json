@@ -3,7 +3,7 @@
     "schema": [
       {"idx": 0, "colName": "Reviewer", "dataType": "string"},
       {"idx": 1, "colName": "Reviewee", "dataType": "string"},
-      {"idx": 2, "colName": "ReviewDate", "dataType": "string"},
+      {"idx": 2, "colName": "ReviewDate", "dataType": "date"},
       {"idx": 3, "colName": "Comments", "dataType": "string"},
       {"idx": 4, "colName": "LinesChanged", "dataType": "int"},
       {"idx": 5, "colName": "Approved", "dataType": "string"}
